@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6d28d9">
+<title>Meu Tempo Vale</title>
+<style>
+*{box-sizing:border-box} :root{--p:#6d28d9;--p2:#9333ea;--bg:#f5f3f8;--card:#fff;--text:#20182b;--muted:#766d82;--line:#e9e3ef;--danger:#dc2626;--good:#16a34a}
+body.dark{--bg:#15121a;--card:#211c28;--text:#f7f3fb;--muted:#aaa0b5;--line:#352e3d}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:88px}
+button,input,select{font:inherit}.app{max-width:620px;margin:auto}.top{padding:28px 18px 82px;background:linear-gradient(135deg,var(--p),var(--p2));color:white;border-radius:0 0 30px 30px}
+.toprow{display:flex;justify-content:space-between;align-items:center}.top h1{margin:4px 0;font-size:25px}.top p{margin:0;opacity:.8}.pig{font-size:46px;background:#ffffff20;padding:10px;border-radius:22px}
+.summary{margin:-58px 14px 14px;background:var(--card);padding:20px;border-radius:23px;box-shadow:0 10px 30px #00000014}.label,.muted{color:var(--muted);font-size:13px}.balance{font-size:34px;font-weight:850;margin:5px 0 17px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mini{background:var(--bg);padding:12px;border-radius:14px}.mini b{display:block;margin-top:4px}
+main{padding:0 14px}.screen{display:none}.screen.active{display:block}.card{background:var(--card);padding:17px;border-radius:20px;margin:12px 0;box-shadow:0 4px 16px #0000000b}.card h2,.title{font-size:18px;margin:0 0 12px}.hero{background:linear-gradient(135deg,#241b2f,#49335e);color:white}.hero .muted{color:#d3c9dc}
+.row{display:flex;gap:9px}.row>*{flex:1}input,select{width:100%;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--text);outline:none}.btn{border:0;border-radius:13px;padding:13px 15px;background:var(--p);color:white;font-weight:750}.btn.secondary{background:var(--bg);color:var(--text)}.btn.danger{background:var(--danger)}.wide{width:100%}.result{display:none;margin-top:12px;padding:13px;background:#ffffff18;border-radius:13px}
+.expense{display:flex;gap:11px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.expense:last-child{border:0}.ico{width:44px;height:44px;display:grid;place-items:center;background:var(--bg);border-radius:14px;font-size:21px}.grow{flex:1}.grow b{display:block}.right{text-align:right}.right b{color:var(--danger);display:block}.actions button,
+.actions{
+border:0 !important;
+background:linear-gradient(135deg,var(--p),var(--p2)) !important;
+font-size:17px;
+padding:8px;
+color:white !important;
+box-shadow:none !important;
+border-radius:12px;
+width:42px;
+height:42px;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+margin-left:4px;
+appearance:none;
+-webkit-appearance:none;
+}.empty{text-align:center;color:var(--muted);padding:24px}
+.bar{height:10px;background:var(--bg);border-radius:99px;overflow:hidden;margin:7px 0}.fill{height:100%;background:linear-gradient(90deg,var(--p),var(--p2));border-radius:99px}.catline{margin:14px 0}.cathead{display:flex;justify-content:space-between;font-size:14px}
+.goal{padding:13px 0;border-bottom:1px solid var(--line)}.goal:last-child{border:0}.goalhead{display:flex;justify-content:space-between;gap:10px}.goal small{color:var(--muted)}
+.field{margin:11px 0}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px 3px}
+nav{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:620px;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
+nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5px 2px}nav button span{display:block;font-size:21px}nav button.active{color:var(--p);font-weight:800}
+.fab{position:fixed;right:max(18px,calc((100vw - 620px)/2 + 18px));bottom:92px;width:58px;height:58px;border-radius:19px;border:0;background:var(--p);color:#fff;font-size:30px;box-shadow:0 9px 24px #6d28d955;z-index:15}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;align-items:flex-end;justify-content:center}.modal.open{display:flex}.sheet{width:100%;max-width:620px;background:var(--card);border-radius:27px 27px 0 0;padding:22px 18px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}.sheet h2{margin-top:0}
+.toast{position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#21182b;color:white;padding:11px 16px;border-radius:99px;z-index:80;display:none;white-space:nowrap}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.sectionhead h2{font-size:18px}.pill{font-size:12px;background:var(--bg);padding:7px 10px;border-radius:99px}
+@media(min-width:700px){body{padding-top:15px}.top{border-radius:30px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="toprow"><div><p>Seu dinheiro é seu tempo.</p><h1>Meu Tempo Vale</h1></div><div class="pig">🐷</div></div></header>
+<section class="summary">
+<div class="label">Disponível neste mês</div><div class="balance" id="balance">R$ 0,00</div>
+<div class="grid">
+<div class="mini"><span class="label">Valor da hora</span><b id="hourValue"></b></div>
+<div class="mini"><span class="label">Tempo gasto</span><b id="spentTime"></b></div>
+<div class="mini"><span class="label">Gastos no mês</span><b id="monthSpent"></b></div>
+<div class="mini"><span class="label">Últimos 7 dias</span><b id="weekSpent"></b></div>
+</div></section>
+
+<main>
+<section id="home" class="screen active">
+<div class="card hero"><h2>⏱️ Quanto isso custa do seu tempo?</h2><p class="muted">Veja o impacto antes de comprar.</p><div class="row"><input id="simValue" type="number" inputmode="decimal" placeholder="Valor em R$"><button class="btn" onclick="simulate()">Calcular</button></div><div class="result" id="simResult"></div></div>
+<div class="sectionhead"><h2>Últimos gastos</h2><span class="pill" id="expenseCount"></span></div><div class="card" id="recentList"></div>
+</section>
+
+<section id="expenses" class="screen"><div class="sectionhead"><h2>Todos os gastos</h2><select id="filterCategory" style="width:auto" onchange="renderAll()"><option value="">Todas</option></select></div><div class="card" id="allList"></div></section>
+
+<section id="reports" class="screen"><div class="card"><h2>📊 Gastos por categoria</h2><div id="categoryReport"></div></div><div class="card"><h2>Resumo</h2><div id="reportSummary"></div></div></section>
+
+<section id="goals" class="screen">
+<div class="card hero"><h2>🎯 Simule uma meta</h2><p class="muted">Descubra quantas horas de trabalho um objetivo representa.</p><button class="btn wide" onclick="openGoal()">Criar nova meta</button></div>
+<div class="card"><h2>Minhas metas</h2><div id="goalList"></div></div>
+</section>
+
+<section id="settings" class="screen">
+<div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" onclick="saveSettings()">Salvar dados</button></div>
+<div class="card"><h2>Aparência e dados</h2><button class="btn secondary wide" onclick="toggleDark()">🌙 Alternar modo claro/escuro</button><br><br><button class="btn secondary wide" onclick="exportData()">⬇️ Exportar backup</button><br><br><label class="btn secondary wide" style="display:block;text-align:center;cursor:pointer">⬆️ Importar backup<input type="file" accept=".json,application/json" onchange="importData(event)" hidden></label><br><button class="btn danger wide" onclick="clearData()">Apagar todos os dados</button></div>
+</section>
+</main>
+</div>
+
+<button class="fab" id="fab" onclick="openExpense()">+</button>
+<nav>
+<button class="active" data-screen="home" onclick="showScreen('home',this)"><span>🏠</span>Início</button>
+<button data-screen="expenses" onclick="showScreen('expenses',this)"><span>💳</span>Gastos</button>
+<button data-screen="reports" onclick="showScreen('reports',this)"><span>📊</span>Relatórios</button>
+<button data-screen="goals" onclick="showScreen('goals',this)"><span>🎯</span>Metas</button>
+<button data-screen="settings" onclick="showScreen('settings',this)"><span>⚙️</span>Ajustes</button>
+</nav>
+
+<div class="modal" id="expenseModal"><div class="sheet"><h2 id="expenseTitle">Adicionar gasto</h2><input type="hidden" id="editId">
+<div class="field"><label>O que você comprou?</label><input id="expenseName" placeholder="Ex.: Hambúrguer"></div>
+<div class="field"><label>Valor (R$)</label><input id="expenseAmount" type="number" inputmode="decimal" placeholder="0,00"></div>
+<div class="field"><label>Categoria</label><select id="expenseCategory"></select></div>
+<div class="field"><label>Data do gasto</label><input id="expenseDate" type="date"></div>
+<div class="row"><button class="btn secondary" onclick="closeModal('expenseModal')">Cancelar</button><button class="btn" onclick="saveExpense()">Salvar</button></div></div></div>
+
+<div class="modal" id="goalModal"><div class="sheet"><h2>Nova meta</h2>
+<div class="field"><label>O que você quer comprar?</label><input id="goalName" placeholder="Ex.: Celular"></div>
+<div class="field"><label>Valor do objetivo (R$)</label><input id="goalValue" type="number" inputmode="decimal"></div>
+<div class="field"><label>Quanto já guardou? (R$)</label><input id="goalSaved" type="number" inputmode="decimal" value="0"></div><div class="field"><label>Foto do objetivo (opcional)</label><input id="goalImage" type="file" accept="image/*"></div>
+<div class="row"><button class="btn secondary" onclick="closeModal('goalModal')">Cancelar</button><button class="btn" onclick="saveGoal()">Criar meta</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const cats={
+ fastfood:{name:"Fast-food",icon:"🍔"},transport:{name:"Transporte",icon:"🚕"},
+ leisure:{name:"Lazer",icon:"🎮"},market:{name:"Mercado",icon:"🛒"},
+ clothes:{name:"Roupas",icon:"👕"},subscriptions:{name:"Assinaturas",icon:"📱"},
+ home:{name:"Casa",icon:"🏠"},health:{name:"Saúde",icon:"💊"},other:{name:"Outros",icon:"📦"}
+};
+let state=load();
+function load(){
+ try{
+  const x=JSON.parse(localStorage.getItem("mtv_state"));
+  return x||{salary:800,workHours:20,expenses:[],goals:[],dark:false};
+ }catch(e){return {salary:800,workHours:20,expenses:[],goals:[],dark:false}}
+}
+function persist(){localStorage.setItem("mtv_state",JSON.stringify(state))}
+function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+function hourValue(){const monthlyHours=state.workHours*4.33;return monthlyHours>0?state.salary/monthlyHours:0}
+function timeText(hours){
+ if(!isFinite(hours)||hours<0)return "0h 00min";
+ const m=Math.round(hours*60),h=Math.floor(m/60),min=m%60;
+ return `${h}h ${String(min).padStart(2,"0")}min`
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
+function totals(){
+ const now=new Date(),month=now.getMonth(),year=now.getFullYear();
+ const monthExpenses=state.expenses.filter(x=>{const d=new Date(x.date);return d.getMonth()===month&&d.getFullYear()===year});
+ const monthSpent=monthExpenses.reduce((a,b)=>a+Number(b.amount),0);
+ const weekSpent=state.expenses.filter(x=>(now-new Date(x.date))<=7*86400000).reduce((a,b)=>a+Number(b.amount),0);
+ return {monthSpent,weekSpent}
+}
+function update(){
+ const t=totals(),hv=hourValue();
+ document.getElementById("balance").textContent=money(state.salary-t.monthSpent);
+ document.getElementById("hourValue").textContent=money(hv);
+ document.getElementById("spentTime").textContent=timeText(hv?t.monthSpent/hv:0);
+ document.getElementById("monthSpent").textContent=money(t.monthSpent);
+ document.getElementById("weekSpent").textContent=money(t.weekSpent);
+ document.getElementById("salary").value=state.salary;
+ document.getElementById("workHours").value=state.workHours;
+ document.body.classList.toggle("dark",!!state.dark);
+ renderRecent();renderAll();renderReports();renderGoals()
+}
+function expenseHTML(x){
+ const c=cats[x.category]||cats.other,h=hourValue()?x.amount/hourValue():0;
+ return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${new Date(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b><span class="muted">${timeText(h)}</span><div class="actions"><button onclick="editExpense('${x.id}')">✏️</button><button onclick="deleteExpense('${x.id}')">🗑️</button></div></div></div>`
+}
+function renderRecent(){
+ const arr=[...state.expenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+ document.getElementById("expenseCount").textContent=`${state.expenses.length} registros`;
+ document.getElementById("recentList").innerHTML=arr.length?arr.map(expenseHTML).join(""):`<div class="empty">🐷 Nenhum gasto registrado ainda.</div>`
+}
+function renderAll(){
+ const f=document.getElementById("filterCategory").value;
+ const arr=[...state.expenses].filter(x=>!f||x.category===f).sort((a,b)=>new Date(b.date)-new Date(a.date));
+ document.getElementById("allList").innerHTML=arr.length?arr.map(expenseHTML).join(""):`<div class="empty">Nenhum gasto nesta categoria.</div>`
+}
+function renderReports(){
+ const t=totals(),s={};state.expenses.forEach(x=>s[x.category]=(s[x.category]||0)+Number(x.amount));
+ const max=Math.max(1,...Object.values(s));
+ document.getElementById("categoryReport").innerHTML=Object.keys(s).length?Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join(""):`<div class="empty">Registre gastos para ver o relatório.</div>`;
+ document.getElementById("reportSummary").innerHTML=`<p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${timeText(hourValue()?t.monthSpent/hourValue():0)}</b></p>`
+}
+function renderGoals(){
+ document.getElementById("goalList").innerHTML=state.goals.length?state.goals.map(g=>{const pct=Math.min(100,g.value?g.saved/g.value*100:0),remaining=Math.max(0,g.value-g.saved),hours=hourValue()?remaining/hourValue():0;return `<div class="goal"><div class="goalhead"><div>${g.image?`<img src="${g.image}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;margin-bottom:8px;display:block">`:""}<b>${esc(g.name)}</b><br><small>${money(g.saved)} de ${money(g.value)}</small></div><div class="goal-actions"><button class="actions" onclick="addSavedGoal(\'${g.id}\')">💰</button><button class="actions" onclick="deleteGoal(\'${g.id}\')">🗑️</button></div></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><small>${remaining<=0 ? '🏆 Meta concluída!' : `Faltam ${money(remaining)} • ${timeText(hours)} de trabalho`}</small></div>`}).join(""):`<div class="empty">🎯 Nenhuma meta criada.</div>`
+}
+function simulate(){
+ const v=Number(document.getElementById("simValue").value),r=document.getElementById("simResult");
+ if(!(v>0)){toast("Digite um valor válido");return}
+ const h=hourValue()?v/hourValue():0;r.style.display="block";r.innerHTML=`🐷 <b>${money(v)}</b> equivale a <b>${timeText(h)}</b> do seu trabalho.`
+}
+function showScreen(id,btn){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+ document.getElementById("fab").style.display=(id==="home"||id==="expenses")?"block":"none";window.scrollTo({top:0,behavior:"smooth"})
+}
+function openExpense(){document.getElementById("expenseTitle").textContent="Adicionar gasto";document.getElementById("editId").value="";document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";document.getElementById("expenseDate").value=new Date().toISOString().split("T")[0];openModal("expenseModal")}
+function editExpense(id){const x=state.expenses.find(e=>String(e.id)===String(id));if(!x)return;document.getElementById("expenseTitle").textContent="Editar gasto";document.getElementById("editId").value=x.id;document.getElementById("expenseName").value=x.name;document.getElementById("expenseAmount").value=x.amount;document.getElementById("expenseCategory").value=x.category;document.getElementById("expenseDate").value=new Date(x.date).toISOString().split("T")[0];openModal("expenseModal")}
+function saveExpense(){
+ const id=document.getElementById("editId").value,name=document.getElementById("expenseName").value.trim(),amount=Number(document.getElementById("expenseAmount").value),category=document.getElementById("expenseCategory").value,date=document.getElementById("expenseDate").value;
+ if(!name||!(amount>0)){toast("Preencha nome e valor");return}
+ if(id){const x=state.expenses.find(e=>String(e.id)===String(id));Object.assign(x,{name,amount,category,date:new Date(date).toISOString()})}
+ else state.expenses.push({id:String(Date.now()),name,amount,category,date:new Date(date || new Date().toISOString().split("T")[0]).toISOString()});
+ persist();closeModal("expenseModal");update();toast("Gasto salvo")
+}
+function deleteExpense(id){if(confirm("Excluir este gasto?")){state.expenses=state.expenses.filter(x=>String(x.id)!==String(id));persist();update()}}
+function openGoal(){document.getElementById("goalName").value="";document.getElementById("goalValue").value="";document.getElementById("goalSaved").value="0";openModal("goalModal")}
+function saveGoal(){
+const name=document.getElementById("goalName").value.trim(),value=Number(document.getElementById("goalValue").value),saved=Number(document.getElementById("goalSaved").value)||0,file=document.getElementById("goalImage").files[0];
+if(!name||!(value>0)){toast("Preencha a meta e o valor");return}
+const finish=(img)=>{state.goals.push({id:String(Date.now()),name,value,saved,image:img||null});persist();closeModal("goalModal");update();toast("Meta criada")}
+if(file){const r=new FileReader();r.onload=()=>finish(r.result);r.readAsDataURL(file)}else finish(null)
+}
+function deleteGoal(id){if(confirm("Excluir esta meta?")){state.goals=state.goals.filter(x=>String(x.id)!==String(id));persist();update()}}
+function addSavedGoal(id){
+ const g=state.goals.find(x=>String(x.id)===String(id));
+ if(!g)return;
+ const v=Number(prompt("Quanto você juntou para essa meta agora?","0"));
+ if(!(v>0))return;
+ g.saved+=v;
+ persist();
+ update();
+ if(g.saved>=g.value){
+   alert("🎉 Parabéns! Você concluiu a meta '"+g.name+"'! 🥳");
+ }
+}
+
+function saveSettings(){const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value);if(!(s>0&&h>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;persist();update();toast("Horas semanais atualizadas")}
+function toggleDark(){state.dark=!state.dark;persist();update()}
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="meu-tempo-vale-backup.json";a.click();URL.revokeObjectURL(a.href)}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;persist();update();toast("Backup importado")}catch(e){alert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
+function clearData(){if(confirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,expenses:[],goals:[],dark:false};persist();update();toast("Dados apagados")}}
+function openModal(id){document.getElementById(id).classList.add("open")}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
+const catOptions=Object.entries(cats).map(([k,c])=>`<option value="${k}">${c.icon} ${c.name}</option>`).join("");
+document.getElementById("expenseCategory").innerHTML=catOptions;
+document.getElementById("filterCategory").innerHTML='<option value="">Todas</option>'+catOptions;
+
+function celebrateGoal(){
+ const emojis=["🎉","🎊","✨","🏆","🥳"];
+ for(let i=0;i<35;i++){
+   const e=document.createElement("div");
+   e.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+   e.style.position="fixed";
+   e.style.left=Math.random()*100+"vw";
+   e.style.top="-30px";
+   e.style.fontSize=(20+Math.random()*20)+"px";
+   e.style.zIndex="9999";
+   e.style.transition="transform 3s linear, top 3s linear";
+   document.body.appendChild(e);
+   requestAnimationFrame(()=>{
+      e.style.top="110vh";
+      e.style.transform=`rotate(${Math.random()*720}deg)`;
+   });
+   setTimeout(()=>e.remove(),3200);
+ }
+}
+
+update();
+</script>
+</body>
+</html>
