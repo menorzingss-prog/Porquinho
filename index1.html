@@ -41,7 +41,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 .modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;align-items:flex-end;justify-content:center}.modal.open{display:flex}.sheet{width:100%;max-width:620px;background:var(--card);border-radius:27px 27px 0 0;padding:22px 18px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}.sheet h2{margin-top:0}
 .toast{position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#21182b;color:white;padding:11px 16px;border-radius:99px;z-index:80;display:none;white-space:nowrap}
 .sectionhead{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.sectionhead h2{font-size:18px}.pill{font-size:12px;background:var(--bg);padding:7px 10px;border-radius:99px}
-@media(min-width:700px){body{padding-top:15px}.top{border-radius:30px}}
+.info-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--p);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-left:8px}.info-box{margin-top:10px;background:var(--card);padding:12px;border-radius:12px}@media(min-width:700px){body{padding-top:15px}.top{border-radius:30px}}
 </style>
 </head>
 <body>
@@ -72,7 +72,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 </section>
 
 <section id="settings" class="screen">
-<div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" onclick="saveSettings()">Salvar dados</button></div>
+<div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><div class="field"><label>Horas trabalhadas por dia</label><input id="workDayHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" onclick="saveSettings()">Salvar dados</button></div>
 <div class="card"><h2>Aparência e dados</h2><button class="btn secondary wide" onclick="toggleDark()">🌙 Alternar modo claro/escuro</button><br><br><button class="btn secondary wide" onclick="exportData()">⬇️ Exportar backup</button><br><br><label class="btn secondary wide" style="display:block;text-align:center;cursor:pointer">⬆️ Importar backup<input type="file" accept=".json,application/json" onchange="importData(event)" hidden></label><br><button class="btn danger wide" onclick="clearData()">Apagar todos os dados</button></div>
 </section>
 </main>
@@ -112,8 +112,8 @@ let state=load();
 function load(){
  try{
   const x=JSON.parse(localStorage.getItem("mtv_state"));
-  return x||{salary:800,workHours:20,expenses:[],goals:[],dark:false};
- }catch(e){return {salary:800,workHours:20,expenses:[],goals:[],dark:false}}
+  return x||{salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false};
+ }catch(e){return {salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false}}
 }
 function persist(){localStorage.setItem("mtv_state",JSON.stringify(state))}
 function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
@@ -140,7 +140,7 @@ function update(){
  document.getElementById("monthSpent").textContent=money(t.monthSpent);
  document.getElementById("weekSpent").textContent=money(t.weekSpent);
  document.getElementById("salary").value=state.salary;
- document.getElementById("workHours").value=state.workHours;
+ document.getElementById("workHours").value=state.workHours;document.getElementById("workDayHours").value=state.workDayHours||4;
  document.body.classList.toggle("dark",!!state.dark);
  renderRecent();renderAll();renderReports();renderGoals()
 }
@@ -170,7 +170,16 @@ function renderGoals(){
 function simulate(){
  const v=Number(document.getElementById("simValue").value),r=document.getElementById("simResult");
  if(!(v>0)){toast("Digite um valor válido");return}
- const h=hourValue()?v/hourValue():0;r.style.display="block";r.innerHTML=`🐷 <b>${money(v)}</b> equivale a <b>${timeText(h)}</b> do seu trabalho.`
+ const h=hourValue()?v/hourValue():0;
+ const diaHoras=state.workDayHours||1;
+ const dias=Math.floor(h/diaHoras);
+ const horasRest=(h-(dias*diaHoras));
+ const resumo=(dias>0)?`${dias} dia${dias>1?'s':''} e ${timeText(horasRest)}`:timeText(h);
+ r.style.display="block";
+ r.innerHTML=`🐷 <b>${money(v)}</b> equivale a <b>${resumo}</b> de trabalho <span class="info-icon" onclick="showHourInfo(${h.toFixed(2)},'${resumo}')">ⓘ</span>`;
+}
+function showHourInfo(horas,resumo){
+ alert(`Detalhes do cálculo\n\n⏱️ ${timeText(horas)} de trabalho\n📅 ${resumo}\n💵 Valor da sua hora: ${money(hourValue())}`);
 }
 function showScreen(id,btn){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");
@@ -208,11 +217,11 @@ function addSavedGoal(id){
  }
 }
 
-function saveSettings(){const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value);if(!(s>0&&h>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;persist();update();toast("Horas semanais atualizadas")}
+function saveSettings(){const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value),d=Number(document.getElementById("workDayHours").value);if(!(s>0&&h>0&&d>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;state.workDayHours=d;persist();update();toast("Dados atualizados")}
 function toggleDark(){state.dark=!state.dark;persist();update()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="meu-tempo-vale-backup.json";a.click();URL.revokeObjectURL(a.href)}
 function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;persist();update();toast("Backup importado")}catch(e){alert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
-function clearData(){if(confirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,expenses:[],goals:[],dark:false};persist();update();toast("Dados apagados")}}
+function clearData(){if(confirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false};persist();update();toast("Dados apagados")}}
 function openModal(id){document.getElementById(id).classList.add("open")}
 function closeModal(id){document.getElementById(id).classList.remove("open")}
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
