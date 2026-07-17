@@ -35,7 +35,7 @@ appearance:none;
 .bar{height:10px;background:var(--bg);border-radius:99px;overflow:hidden;margin:7px 0}.fill{height:100%;background:linear-gradient(90deg,var(--p),var(--p2));border-radius:99px}.catline{margin:14px 0}.cathead{display:flex;justify-content:space-between;font-size:14px}
 .goal{padding:13px 0;border-bottom:1px solid var(--line)}.goal:last-child{border:0}.goalhead{display:flex;justify-content:space-between;gap:10px}.goal small{color:var(--muted)}
 .field{margin:11px 0}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px 3px}
-nav{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:620px;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
+nav{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:620px;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
 nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5px 2px}nav button span{display:block;font-size:21px}nav button.active{color:var(--p);font-weight:800}
 .fab{position:fixed;right:max(18px,calc((100vw - 620px)/2 + 18px));bottom:92px;width:58px;height:58px;border-radius:19px;border:0;background:var(--p);color:#fff;font-size:30px;box-shadow:0 9px 24px #6d28d955;z-index:15}
 .modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;align-items:flex-end;justify-content:center}.modal.open{display:flex}.sheet{width:100%;max-width:620px;background:var(--card);border-radius:27px 27px 0 0;padding:22px 18px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}.sheet h2{margin-top:0}
@@ -75,6 +75,16 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><div class="field"><label>Horas trabalhadas por dia</label><input id="workDayHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" onclick="saveSettings()">Salvar dados</button></div>
 <div class="card"><h2>Aparência e dados</h2><button class="btn secondary wide" onclick="toggleDark()">🌙 Alternar modo claro/escuro</button><br><br><button class="btn secondary wide" onclick="exportData()">⬇️ Exportar backup</button><br><br><label class="btn secondary wide" style="display:block;text-align:center;cursor:pointer">⬆️ Importar backup<input type="file" accept=".json,application/json" onchange="importData(event)" hidden></label><br><button class="btn danger wide" onclick="clearData()">Apagar todos os dados</button></div>
 </section>
+
+<section id="extras" class="screen">
+<div class="card hero"><h2>💰 Ganhos Extras</h2><p class="muted">Adicione outras fontes de renda além do salário principal.</p>
+<div class="field"><label>Descrição do ganho</label><input id="extraDesc" placeholder="Ex.: Freelancer"></div>
+<div class="field"><label>Valor (R$)</label><input id="extraAmount" type="number" inputmode="decimal" placeholder="0,00"></div>
+<button class="btn wide" onclick="addExtraIncome()">➕ Adicionar ganho</button>
+</div>
+<div class="card"><h2>Ganhos cadastrados</h2><div id="extraList"></div></div>
+<div class="card"><div class="cathead"><span class="label">Total de ganhos extras</span><b id="extraTotalValue"></b></div><div class="cathead" style="margin-top:8px"><span class="label">Renda total do mês</span><b id="rendaTotalValue"></b></div></div>
+</section>
 </main>
 </div>
 
@@ -85,6 +95,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <button data-screen="reports" onclick="showScreen('reports',this)"><span>📊</span>Relatórios</button>
 <button data-screen="goals" onclick="showScreen('goals',this)"><span>🎯</span>Metas</button>
 <button data-screen="settings" onclick="showScreen('settings',this)"><span>⚙️</span>Ajustes</button>
+<button data-screen="extras" onclick="showScreen('extras',this)"><span>💰</span>Extras</button>
 </nav>
 
 <div class="modal" id="expenseModal"><div class="sheet"><h2 id="expenseTitle">Adicionar gasto</h2><input type="hidden" id="editId">
@@ -99,6 +110,10 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="field"><label>Valor do objetivo (R$)</label><input id="goalValue" type="number" inputmode="decimal"></div>
 <div class="field"><label>Quanto já guardou? (R$)</label><input id="goalSaved" type="number" inputmode="decimal" value="0"></div><div class="field"><label>Foto do objetivo (opcional)</label><input id="goalImage" type="file" accept="image/*"></div>
 <div class="row"><button class="btn secondary" onclick="closeModal('goalModal')">Cancelar</button><button class="btn" onclick="saveGoal()">Criar meta</button></div></div></div>
+
+<div class="modal" id="confirmModal"><div class="sheet"><h2>Confirmar</h2><p id="confirmMessage" class="muted"></p><div class="row"><button class="btn secondary" onclick="confirmNo()">Cancelar</button><button class="btn danger" onclick="confirmYes()">Confirmar</button></div></div></div>
+<div class="modal" id="promptModal"><div class="sheet"><h2 id="promptTitle">Informe o valor</h2><p id="promptMessage" class="muted"></p><div class="field"><input id="promptInput" type="number" inputmode="decimal"></div><div class="row"><button class="btn secondary" onclick="promptCancel()">Cancelar</button><button class="btn" onclick="promptOk()">OK</button></div></div></div>
+<div class="modal" id="alertModal"><div class="sheet"><h2 id="alertTitle">Aviso</h2><p id="alertMessage" class="muted" style="white-space:pre-line"></p><button class="btn wide" onclick="closeModal('alertModal')">OK</button></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -109,6 +124,7 @@ const cats={
  home:{name:"Casa",icon:"🏠"},health:{name:"Saúde",icon:"💊"},other:{name:"Outros",icon:"📦"}
 };
 let state=load();
+if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];
 function load(){
  try{
   const x=JSON.parse(localStorage.getItem("mtv_state"));
@@ -117,7 +133,9 @@ function load(){
 }
 function persist(){localStorage.setItem("mtv_state",JSON.stringify(state))}
 function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-function hourValue(){const monthlyHours=state.workHours*4.33;return monthlyHours>0?state.salary/monthlyHours:0}
+function hourValue(){const monthlyHours=state.workHours*4.33;return monthlyHours>0?rendaTotal()/monthlyHours:0}
+function extraTotal(){return (state.extraIncomes||[]).reduce((a,b)=>a+Number(b.amount||0),0)}
+function rendaTotal(){return Number(state.salary||0)+extraTotal()}
 function timeText(hours){
  if(!isFinite(hours)||hours<0)return "0h 00min";
  const m=Math.round(hours*60),h=Math.floor(m/60),min=m%60;
@@ -134,7 +152,7 @@ function totals(){
 }
 function update(){
  const t=totals(),hv=hourValue();
- document.getElementById("balance").textContent=money(state.salary-t.monthSpent);
+ document.getElementById("balance").textContent=money(rendaTotal()-t.monthSpent);
  document.getElementById("hourValue").textContent=money(hv);
  document.getElementById("spentTime").textContent=timeText(hv?t.monthSpent/hv:0);
  document.getElementById("monthSpent").textContent=money(t.monthSpent);
@@ -142,7 +160,7 @@ function update(){
  document.getElementById("salary").value=state.salary;
  document.getElementById("workHours").value=state.workHours;document.getElementById("workDayHours").value=state.workDayHours||4;
  document.body.classList.toggle("dark",!!state.dark);
- renderRecent();renderAll();renderReports();renderGoals()
+ renderRecent();renderAll();renderReports();renderGoals();renderExtras()
 }
 function expenseHTML(x){
  const c=cats[x.category]||cats.other,h=hourValue()?x.amount/hourValue():0;
@@ -179,7 +197,7 @@ function simulate(){
  r.innerHTML=`🐷 <b>${money(v)}</b> equivale a <b>${resumo}</b> de trabalho <span class="info-icon" onclick="showHourInfo(${h.toFixed(2)},'${resumo}')">ⓘ</span>`;
 }
 function showHourInfo(horas,resumo){
- alert(`Detalhes do cálculo\n\n⏱️ ${timeText(horas)} de trabalho\n📅 ${resumo}\n💵 Valor da sua hora: ${money(hourValue())}`);
+ showAlert(`Detalhes do cálculo\n\n⏱️ ${timeText(horas)} de trabalho\n📅 ${resumo}\n💵 Valor da sua hora: ${money(hourValue())}`);
 }
 function showScreen(id,btn){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");
@@ -195,7 +213,7 @@ function saveExpense(){
  else state.expenses.push({id:String(Date.now()),name,amount,category,date:new Date(date || new Date().toISOString().split("T")[0]).toISOString()});
  persist();closeModal("expenseModal");update();toast("Gasto salvo")
 }
-function deleteExpense(id){if(confirm("Excluir este gasto?")){state.expenses=state.expenses.filter(x=>String(x.id)!==String(id));persist();update()}}
+async function deleteExpense(id){if(await showConfirm("Excluir este gasto?")){state.expenses=state.expenses.filter(x=>String(x.id)!==String(id));persist();update()}}
 function openGoal(){document.getElementById("goalName").value="";document.getElementById("goalValue").value="";document.getElementById("goalSaved").value="0";openModal("goalModal")}
 function saveGoal(){
 const name=document.getElementById("goalName").value.trim(),value=Number(document.getElementById("goalValue").value),saved=Number(document.getElementById("goalSaved").value)||0,file=document.getElementById("goalImage").files[0];
@@ -203,27 +221,54 @@ if(!name||!(value>0)){toast("Preencha a meta e o valor");return}
 const finish=(img)=>{state.goals.push({id:String(Date.now()),name,value,saved,image:img||null});persist();closeModal("goalModal");update();toast("Meta criada")}
 if(file){const r=new FileReader();r.onload=()=>finish(r.result);r.readAsDataURL(file)}else finish(null)
 }
-function deleteGoal(id){if(confirm("Excluir esta meta?")){state.goals=state.goals.filter(x=>String(x.id)!==String(id));persist();update()}}
-function addSavedGoal(id){
+async function deleteGoal(id){if(await showConfirm("Excluir esta meta?")){state.goals=state.goals.filter(x=>String(x.id)!==String(id));persist();update()}}
+async function addSavedGoal(id){
  const g=state.goals.find(x=>String(x.id)===String(id));
  if(!g)return;
- const v=Number(prompt("Quanto você juntou para essa meta agora?","0"));
+ const v=Number(await showPrompt("Quanto você juntou para essa meta agora?","0"));
  if(!(v>0))return;
  g.saved+=v;
  persist();
  update();
  if(g.saved>=g.value){
-   alert("🎉 Parabéns! Você concluiu a meta '"+g.name+"'! 🥳");
+   showAlert("🎉 Parabéns! Você concluiu a meta '"+g.name+"'! 🥳");
  }
+}
+
+function addExtraIncome(){
+ const desc=document.getElementById("extraDesc").value.trim(),amount=Number(document.getElementById("extraAmount").value);
+ if(!desc||!(amount>0)){toast("Preencha a descrição e o valor");return}
+ state.extraIncomes.push({id:String(Date.now()),desc,amount});
+ persist();
+ document.getElementById("extraDesc").value="";
+ document.getElementById("extraAmount").value="";
+ update();
+ toast("Ganho extra adicionado")
+}
+async function deleteExtraIncome(id){if(await showConfirm("Excluir este ganho extra?")){state.extraIncomes=state.extraIncomes.filter(x=>String(x.id)!==String(id));persist();update()}}
+function renderExtras(){
+ const arr=state.extraIncomes||[];
+ document.getElementById("extraList").innerHTML=arr.length?arr.map(x=>`<div class="expense"><div class="ico">💰</div><div class="grow"><b>${esc(x.desc)}</b></div><div class="right"><b style="color:var(--good)">+${money(x.amount)}</b><div class="actions"><button onclick="deleteExtraIncome('${x.id}')">🗑️</button></div></div></div>`).join(""):`<div class="empty">Nenhum ganho extra cadastrado.</div>`;
+ document.getElementById("extraTotalValue").textContent=money(extraTotal());
+ document.getElementById("rendaTotalValue").textContent=money(rendaTotal());
 }
 
 function saveSettings(){const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value),d=Number(document.getElementById("workDayHours").value);if(!(s>0&&h>0&&d>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;state.workDayHours=d;persist();update();toast("Dados atualizados")}
 function toggleDark(){state.dark=!state.dark;persist();update()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="meu-tempo-vale-backup.json";a.click();URL.revokeObjectURL(a.href)}
-function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;persist();update();toast("Backup importado")}catch(e){alert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
-function clearData(){if(confirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false};persist();update();toast("Dados apagados")}}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];persist();update();toast("Backup importado")}catch(e){showAlert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
+async function clearData(){if(await showConfirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false};state.extraIncomes=[];persist();update();toast("Dados apagados")}}
 function openModal(id){document.getElementById(id).classList.add("open")}
 function closeModal(id){document.getElementById(id).classList.remove("open")}
+let _confirmResolve=null;
+function showConfirm(msg){document.getElementById("confirmMessage").textContent=msg;openModal("confirmModal");return new Promise(resolve=>{_confirmResolve=resolve})}
+function confirmYes(){closeModal("confirmModal");if(_confirmResolve)_confirmResolve(true);_confirmResolve=null}
+function confirmNo(){closeModal("confirmModal");if(_confirmResolve)_confirmResolve(false);_confirmResolve=null}
+let _promptResolve=null;
+function showPrompt(msg,defVal){document.getElementById("promptMessage").textContent=msg;document.getElementById("promptInput").value=defVal||"";openModal("promptModal");return new Promise(resolve=>{_promptResolve=resolve})}
+function promptOk(){const v=document.getElementById("promptInput").value;closeModal("promptModal");if(_promptResolve)_promptResolve(v);_promptResolve=null}
+function promptCancel(){closeModal("promptModal");if(_promptResolve)_promptResolve(null);_promptResolve=null}
+function showAlert(msg){document.getElementById("alertMessage").textContent=msg;openModal("alertModal")}
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
 const catOptions=Object.entries(cats).map(([k,c])=>`<option value="${k}">${c.icon} ${c.name}</option>`).join("");
 document.getElementById("expenseCategory").innerHTML=catOptions;
