@@ -8,14 +8,18 @@
 <style>
 *{box-sizing:border-box} :root{--p:#6d28d9;--p2:#9333ea;--bg:#f5f3f8;--card:#fff;--text:#20182b;--muted:#766d82;--line:#e9e3ef;--danger:#dc2626;--good:#16a34a}
 body.dark{--bg:#15121a;--card:#211c28;--text:#f7f3fb;--muted:#aaa0b5;--line:#352e3d}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:88px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:170px}
 button,input,select{font:inherit}.app{max-width:620px;margin:auto}.top{padding:28px 18px 82px;background:linear-gradient(135deg,var(--p),var(--p2));color:white;border-radius:0 0 30px 30px}
 .toprow{display:flex;justify-content:space-between;align-items:center}.top h1{margin:4px 0;font-size:25px}.top p{margin:0;opacity:.8}.pig{font-size:46px;background:#ffffff20;padding:10px;border-radius:22px}
 .summary{margin:-58px 14px 14px;background:var(--card);padding:20px;border-radius:23px;box-shadow:0 10px 30px #00000014}.label,.muted{color:var(--muted);font-size:13px}.balance{font-size:34px;font-weight:850;margin:5px 0 17px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mini{background:var(--bg);padding:12px;border-radius:14px}.mini b{display:block;margin-top:4px}
 main{padding:0 14px}.screen{display:none}.screen.active{display:block}.card{background:var(--card);padding:17px;border-radius:20px;margin:12px 0;box-shadow:0 4px 16px #0000000b}.card h2,.title{font-size:18px;margin:0 0 12px}.hero{background:linear-gradient(135deg,#241b2f,#49335e);color:white}.hero .muted{color:#d3c9dc}
 .row{display:flex;gap:9px}.row>*{flex:1}input,select{width:100%;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--text);outline:none}.btn{border:0;border-radius:13px;padding:13px 15px;background:var(--p);color:white;font-weight:750}.btn.secondary{background:var(--bg);color:var(--text)}.btn.danger{background:var(--danger)}.wide{width:100%}.result{display:none;margin-top:12px;padding:13px;background:#ffffff18;border-radius:13px}
+.right .actions{display:flex !important;width:auto !important;height:auto !important;background:none !important;justify-content:flex-end;margin-top:8px;gap:6px}
+.right .actions button{width:30px !important;height:30px !important;font-size:13px !important;padding:5px !important;margin-left:0 !important}
 .expense{display:flex;gap:11px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.expense:last-child{border:0}.ico{width:44px;height:44px;display:grid;place-items:center;background:var(--bg);border-radius:14px;font-size:21px}.grow{flex:1}.grow b{display:block}.right{text-align:right}.right b{color:var(--danger);display:block}.actions button,
 .actions{
+position:relative;
+z-index:16;
 border:0 !important;
 background:linear-gradient(135deg,var(--p),var(--p2)) !important;
 font-size:17px;
@@ -48,15 +52,31 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="app">
 <header class="top"><div class="toprow"><div><p>Seu dinheiro é seu tempo.</p><h1>Meu Tempo Vale</h1></div><div class="pig">🐷</div></div></header>
 <section class="summary">
-<div class="label">Disponível neste mês</div><div class="balance" id="balance">R$ 0,00</div>
+<div class="label">Disponível neste mês <span class="info-icon" style="width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle" onclick="showBalanceInfo()">ⓘ</span></div><div class="balance" id="balance">R$ 0,00</div>
 <div class="grid">
 <div class="mini"><span class="label">Valor da hora</span><b id="hourValue"></b></div>
-<div class="mini"><span class="label">Tempo gasto</span><b id="spentTime"></b></div>
+<div class="mini"><span class="label">Tempo gasto <span class="info-icon" style="width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle" onclick="showSpentHoursInfo()">ⓘ</span></span><b id="spentTime"></b></div>
 <div class="mini"><span class="label">Gastos no mês</span><b id="monthSpent"></b></div>
 <div class="mini"><span class="label">Últimos 7 dias</span><b id="weekSpent"></b></div>
 </div></section>
 
 <main>
+<!-- ONBOARDING (PRIMEIRA VEZ) INÍCIO -->
+<section id="onboarding" class="screen">
+<div class="card hero" style="text-align:center">
+<div style="font-size:44px;margin-bottom:6px">👋</div>
+<h2>Vamos configurar seu perfil</h2>
+<p class="muted">Leva menos de 1 minuto. Isso é só pra calcular o valor da sua hora de trabalho.</p>
+</div>
+<div class="card">
+<div class="field"><label>Renda mensal (R$)</label><input id="obSalary" type="number" inputmode="decimal" placeholder="Ex.: 1500"></div>
+<div class="field"><label>Horas trabalhadas por semana</label><input id="obWorkHours" type="number" inputmode="decimal" min="1" step="0.5" placeholder="Ex.: 40"></div>
+<div class="field"><label>Horas trabalhadas por dia</label><input id="obWorkDayHours" type="number" inputmode="decimal" min="1" step="0.5" placeholder="Ex.: 8"></div>
+<button class="btn wide" onclick="finishOnboarding()">Começar a usar</button>
+<p class="muted" style="margin:10px 0 0">Depois você pode alterar esses dados em Ajustes (1 vez por dia).</p>
+</div>
+</section>
+<!-- ONBOARDING (PRIMEIRA VEZ) FIM -->
 <section id="home" class="screen active">
 <div class="card hero"><h2>⏱️ Quanto isso custa do seu tempo?</h2><p class="muted">Veja o impacto antes de comprar.</p><div class="row"><input id="simValue" type="number" inputmode="decimal" placeholder="Valor em R$"><button class="btn" onclick="simulate()">Calcular</button></div><div class="result" id="simResult"></div></div>
 <div class="sectionhead"><h2>Últimos gastos</h2><span class="pill" id="expenseCount"></span></div><div class="card" id="recentList"></div>
@@ -72,7 +92,16 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 </section>
 
 <section id="settings" class="screen">
-<div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><div class="field"><label>Horas trabalhadas por dia</label><input id="workDayHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" onclick="saveSettings()">Salvar dados</button></div>
+<div class="card"><h2>⚙️ Seus dados</h2><div class="field"><label>Renda mensal (R$)</label><input id="salary" type="number" inputmode="decimal"></div><div class="field"><label>Horas trabalhadas por semana</label><input id="workHours" type="number" inputmode="decimal" min="1" step="0.5"></div><div class="field"><label>Horas trabalhadas por dia</label><input id="workDayHours" type="number" inputmode="decimal" min="1" step="0.5"></div><p class="muted">O app usa a média de 4,33 semanas por mês para calcular o valor da sua hora.</p><button class="btn wide" id="saveSettingsBtn" onclick="saveSettings()">Salvar dados</button><p class="muted" id="settingsEditLabel" style="margin:10px 0 0"></p></div>
+<!-- PREMIUM: DATAS DE RECEBIMENTO INÍCIO -->
+<div class="card">
+<h2>📅 Datas de recebimento</h2>
+<p class="muted">Se você recebe em datas fixas (ex.: dia 5 e dia 20), cadastre aqui. O "Disponível neste mês" na tela inicial passa a mostrar só o que você já recebeu até hoje — e sua renda mensal é calculada automaticamente pela soma dessas datas.</p>
+<div class="row"><div class="field" style="flex:1"><label>Dia do mês</label><input id="payDay" type="number" min="1" max="31" placeholder="Ex.: 5"></div><div class="field" style="flex:1"><label>Valor (R$)</label><input id="payAmount" type="number" inputmode="decimal" placeholder="Ex.: 400"></div></div>
+<button class="btn wide" onclick="addPayDate()">➕ Adicionar data de recebimento</button>
+<div id="payDateList" style="margin-top:14px"></div>
+</div>
+<!-- PREMIUM: DATAS DE RECEBIMENTO FIM -->
 <div class="card"><h2>Aparência e dados</h2><button class="btn secondary wide" onclick="toggleDark()">🌙 Alternar modo claro/escuro</button><br><br><button class="btn secondary wide" onclick="exportData()">⬇️ Exportar backup</button><br><br><label class="btn secondary wide" style="display:block;text-align:center;cursor:pointer">⬆️ Importar backup<input type="file" accept=".json,application/json" onchange="importData(event)" hidden></label><br><button class="btn danger wide" onclick="clearData()">Apagar todos os dados</button></div>
 </section>
 
@@ -85,6 +114,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="card"><h2>Ganhos cadastrados</h2><div id="extraList"></div></div>
 <div class="card"><div class="cathead"><span class="label">Total de ganhos extras</span><b id="extraTotalValue"></b></div><div class="cathead" style="margin-top:8px"><span class="label">Renda total do mês</span><b id="rendaTotalValue"></b></div></div>
 </section>
+
 </main>
 </div>
 
@@ -117,6 +147,11 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="toast" id="toast"></div>
 
 <script>
+function todayKey(){return new Date().toISOString().split("T")[0]}
+function checkOnboarding(){
+ if(!state.onboardingDone){showScreen("onboarding",null)}
+}
+
 const cats={
  fastfood:{name:"Fast-food",icon:"🍔"},transport:{name:"Transporte",icon:"🚕"},
  leisure:{name:"Lazer",icon:"🎮"},market:{name:"Mercado",icon:"🛒"},
@@ -125,6 +160,10 @@ const cats={
 };
 let state=load();
 if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];
+if(!Array.isArray(state.payDates))state.payDates=[];
+if(typeof state.onboardingDone!=="boolean"){
+ state.onboardingDone=!!((state.expenses&&state.expenses.length)||(state.goals&&state.goals.length)||(state.salary&&state.salary!==800));
+}
 function load(){
  try{
   const x=JSON.parse(localStorage.getItem("mtv_state"));
@@ -136,11 +175,34 @@ function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",c
 function hourValue(){const monthlyHours=state.workHours*4.33;return monthlyHours>0?rendaTotal()/monthlyHours:0}
 function extraTotal(){return (state.extraIncomes||[]).reduce((a,b)=>a+Number(b.amount||0),0)}
 function rendaTotal(){return Number(state.salary||0)+extraTotal()}
+function payDatesTotal(){return (state.payDates||[]).reduce((a,b)=>a+Number(b.valor||0),0)}
+function recebidoAteHoje(){
+ if(!state.payDates||!state.payDates.length)return Number(state.salary||0);
+ const hoje=new Date().getDate();
+ return state.payDates.reduce((a,b)=>a+(Number(b.dia)<=hoje?Number(b.valor||0):0),0);
+}
+function syncSalaryFromPayDates(){
+ if(state.payDates&&state.payDates.length)state.salary=payDatesTotal();
+}
 function timeText(hours){
  if(!isFinite(hours)||hours<0)return "0h 00min";
  const m=Math.round(hours*60),h=Math.floor(m/60),min=m%60;
  return `${h}h ${String(min).padStart(2,"0")}min`
 }
+function dayTimeText(hours){
+ if(!isFinite(hours)||hours<0)return timeText(0);
+ const diaHoras=state.workDayHours||1;
+ const dias=Math.floor(hours/diaHoras);
+ const rest=hours-(dias*diaHoras);
+ const m=Math.round(rest*60),h=Math.floor(m/60),min=m%60;
+ let restText="";
+ if(h>0&&min>0)restText=`${h}h ${String(min).padStart(2,"0")}min`;
+ else if(h>0)restText=`${h}h`;
+ else if(min>0)restText=`${min}min`;
+ if(dias>0)return restText?`${dias} dia${dias>1?"s":""} e ${restText}`:`${dias} dia${dias>1?"s":""}`;
+ return restText||"0min";
+}
+function showHoursAlert(hours){showAlert(`⏱️ ${timeText(hours)} de trabalho`)}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
 function totals(){
@@ -152,19 +214,19 @@ function totals(){
 }
 function update(){
  const t=totals(),hv=hourValue();
- document.getElementById("balance").textContent=money(rendaTotal()-t.monthSpent);
+ document.getElementById("balance").textContent=money(recebidoAteHoje()+extraTotal()-t.monthSpent);
  document.getElementById("hourValue").textContent=money(hv);
- document.getElementById("spentTime").textContent=timeText(hv?t.monthSpent/hv:0);
+ document.getElementById("spentTime").textContent=dayTimeText(hv?t.monthSpent/hv:0);
  document.getElementById("monthSpent").textContent=money(t.monthSpent);
  document.getElementById("weekSpent").textContent=money(t.weekSpent);
  document.getElementById("salary").value=state.salary;
  document.getElementById("workHours").value=state.workHours;document.getElementById("workDayHours").value=state.workDayHours||4;
  document.body.classList.toggle("dark",!!state.dark);
- renderRecent();renderAll();renderReports();renderGoals();renderExtras()
+ syncSalaryFromPayDates();renderRecent();renderAll();renderReports();renderGoals();renderExtras();updateSettingsEditLabel();renderPayDates()
 }
 function expenseHTML(x){
  const c=cats[x.category]||cats.other,h=hourValue()?x.amount/hourValue():0;
- return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${new Date(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b><span class="muted">${timeText(h)}</span><div class="actions"><button onclick="editExpense('${x.id}')">✏️</button><button onclick="deleteExpense('${x.id}')">🗑️</button></div></div></div>`
+ return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${new Date(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b><span class="muted">${dayTimeText(h)} <span class="info-icon" style="width:14px;height:14px;font-size:9px" onclick="showHoursAlert(${h})">ⓘ</span></span><div class="actions"><button onclick="editExpense('${x.id}')">✏️</button><button onclick="deleteExpense('${x.id}')">🗑️</button></div></div></div>`
 }
 function renderRecent(){
  const arr=[...state.expenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
@@ -180,28 +242,26 @@ function renderReports(){
  const t=totals(),s={};state.expenses.forEach(x=>s[x.category]=(s[x.category]||0)+Number(x.amount));
  const max=Math.max(1,...Object.values(s));
  document.getElementById("categoryReport").innerHTML=Object.keys(s).length?Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join(""):`<div class="empty">Registre gastos para ver o relatório.</div>`;
- document.getElementById("reportSummary").innerHTML=`<p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${timeText(hourValue()?t.monthSpent/hourValue():0)}</b></p>`
+ document.getElementById("reportSummary").innerHTML=`<p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${dayTimeText(hourValue()?t.monthSpent/hourValue():0)}</b> <span class="info-icon" onclick="showHoursAlert(${hourValue()?t.monthSpent/hourValue():0})">ⓘ</span></p>`
 }
 function renderGoals(){
- document.getElementById("goalList").innerHTML=state.goals.length?state.goals.map(g=>{const pct=Math.min(100,g.value?g.saved/g.value*100:0),remaining=Math.max(0,g.value-g.saved),hours=hourValue()?remaining/hourValue():0;return `<div class="goal"><div class="goalhead"><div>${g.image?`<img src="${g.image}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;margin-bottom:8px;display:block">`:""}<b>${esc(g.name)}</b><br><small>${money(g.saved)} de ${money(g.value)}</small></div><div class="goal-actions"><button class="actions" onclick="addSavedGoal(\'${g.id}\')">💰</button><button class="actions" onclick="deleteGoal(\'${g.id}\')">🗑️</button></div></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><small>${remaining<=0 ? '🏆 Meta concluída!' : `Faltam ${money(remaining)} • ${timeText(hours)} de trabalho`}</small></div>`}).join(""):`<div class="empty">🎯 Nenhuma meta criada.</div>`
+ document.getElementById("goalList").innerHTML=state.goals.length?state.goals.map(g=>{const pct=Math.min(100,g.value?g.saved/g.value*100:0),remaining=Math.max(0,g.value-g.saved),hours=hourValue()?remaining/hourValue():0;return `<div class="goal"><div class="goalhead"><div>${g.image?`<img src="${g.image}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;margin-bottom:8px;display:block">`:""}<b>${esc(g.name)}</b><br><small>${money(g.saved)} de ${money(g.value)}</small></div><div class="goal-actions"><button class="actions" onclick="addSavedGoal(\'${g.id}\')">💰</button><button class="actions" onclick="deleteGoal(\'${g.id}\')">🗑️</button></div></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><small>${remaining<=0 ? '🏆 Meta concluída!' : `Faltam ${money(remaining)} • ${dayTimeText(hours)} de trabalho <span class="info-icon" style="width:18px;height:18px;font-size:11px" onclick="showHoursAlert(${hours})">ⓘ</span>`}</small></div>`}).join(""):`<div class="empty">🎯 Nenhuma meta criada.</div>`
 }
 function simulate(){
  const v=Number(document.getElementById("simValue").value),r=document.getElementById("simResult");
  if(!(v>0)){toast("Digite um valor válido");return}
  const h=hourValue()?v/hourValue():0;
- const diaHoras=state.workDayHours||1;
- const dias=Math.floor(h/diaHoras);
- const horasRest=(h-(dias*diaHoras));
- const resumo=(dias>0)?`${dias} dia${dias>1?'s':''} e ${timeText(horasRest)}`:timeText(h);
+ const resumo=dayTimeText(h);
  r.style.display="block";
  r.innerHTML=`🐷 <b>${money(v)}</b> equivale a <b>${resumo}</b> de trabalho <span class="info-icon" onclick="showHourInfo(${h.toFixed(2)},'${resumo}')">ⓘ</span>`;
 }
+function showSpentHoursInfo(){const hv=hourValue();showHoursAlert(hv?totals().monthSpent/hv:0)}
 function showHourInfo(horas,resumo){
  showAlert(`Detalhes do cálculo\n\n⏱️ ${timeText(horas)} de trabalho\n📅 ${resumo}\n💵 Valor da sua hora: ${money(hourValue())}`);
 }
 function showScreen(id,btn){
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");
- document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");
  document.getElementById("fab").style.display=(id==="home"||id==="expenses")?"block":"none";window.scrollTo({top:0,behavior:"smooth"})
 }
 function openExpense(){document.getElementById("expenseTitle").textContent="Adicionar gasto";document.getElementById("editId").value="";document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";document.getElementById("expenseDate").value=new Date().toISOString().split("T")[0];openModal("expenseModal")}
@@ -214,7 +274,8 @@ function saveExpense(){
  persist();closeModal("expenseModal");update();toast("Gasto salvo")
 }
 async function deleteExpense(id){if(await showConfirm("Excluir este gasto?")){state.expenses=state.expenses.filter(x=>String(x.id)!==String(id));persist();update()}}
-function openGoal(){document.getElementById("goalName").value="";document.getElementById("goalValue").value="";document.getElementById("goalSaved").value="0";openModal("goalModal")}
+function openGoal(){
+ document.getElementById("goalName").value="";document.getElementById("goalValue").value="";document.getElementById("goalSaved").value="0";openModal("goalModal")}
 function saveGoal(){
 const name=document.getElementById("goalName").value.trim(),value=Number(document.getElementById("goalValue").value),saved=Number(document.getElementById("goalSaved").value)||0,file=document.getElementById("goalImage").files[0];
 if(!name||!(value>0)){toast("Preencha a meta e o valor");return}
@@ -252,11 +313,68 @@ function renderExtras(){
  document.getElementById("extraTotalValue").textContent=money(extraTotal());
  document.getElementById("rendaTotalValue").textContent=money(rendaTotal());
 }
+function addPayDate(){
+ const dia=Number(document.getElementById("payDay").value),valor=Number(document.getElementById("payAmount").value);
+ if(!(dia>=1&&dia<=31)||!(valor>0)){toast("Informe um dia (1-31) e um valor válido");return}
+ state.payDates.push({id:String(Date.now()),dia,valor});
+ syncSalaryFromPayDates();
+ persist();
+ document.getElementById("payDay").value="";
+ document.getElementById("payAmount").value="";
+ update();
+ toast("Data de recebimento adicionada");
+}
+async function deletePayDate(id){
+ if(await showConfirm("Excluir esta data de recebimento?")){
+  state.payDates=state.payDates.filter(x=>String(x.id)!==String(id));
+  if(state.payDates.length)syncSalaryFromPayDates();
+  persist();update();
+ }
+}
+function renderPayDates(){
+ const el=document.getElementById("payDateList");
+ if(!el)return;
+ const salaryInput=document.getElementById("salary");
+ const arr=(state.payDates||[]).slice().sort((a,b)=>a.dia-b.dia);
+ el.innerHTML=arr.length?arr.map(x=>`<div class="expense"><div class="ico">📅</div><div class="grow"><b>Dia ${x.dia}</b></div><div class="right"><b style="color:var(--good)">+${money(x.valor)}</b><div class="actions"><button onclick="deletePayDate('${x.id}')">🗑️</button></div></div></div>`).join(""):`<div class="empty">Nenhuma data cadastrada. Sua renda mensal usa o valor informado acima.</div>`;
+ if(salaryInput){
+  if(arr.length){salaryInput.readOnly=true;salaryInput.title="Calculado automaticamente pelas datas de recebimento"}
+  else{salaryInput.readOnly=false;salaryInput.title=""}
+ }
+}
+function showBalanceInfo(){
+ if(state.payDates&&state.payDates.length){
+  showAlert(`Você já recebeu ${money(recebidoAteHoje()+extraTotal())} este mês (com base nas suas datas de recebimento). Sua renda mensal total é ${money(rendaTotal())}.`);
+ }else{
+  showAlert(`Este valor é sua renda mensal total (${money(rendaTotal())}) menos os gastos do mês. Cadastre datas de recebimento em Ajustes para ver só o que já caiu na conta.`);
+ }
+}
 
-function saveSettings(){const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value),d=Number(document.getElementById("workDayHours").value);if(!(s>0&&h>0&&d>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;state.workDayHours=d;persist();update();toast("Dados atualizados")}
+function finishOnboarding(){
+ const s=Number(document.getElementById("obSalary").value),h=Number(document.getElementById("obWorkHours").value),d=Number(document.getElementById("obWorkDayHours").value);
+ if(!(s>0&&h>0&&d>0)){toast("Preencha todos os campos corretamente");return}
+ state.salary=s;state.workHours=h;state.workDayHours=d;state.onboardingDone=true;
+ persist();update();
+ showScreen("home",document.querySelector('[data-screen=home]'));
+ toast("Perfil configurado! 🎉");
+}
+function canEditSettingsToday(){
+ let last=null;try{last=localStorage.getItem("porquinho_lastsettingsedit")}catch(e){}
+ return last!==todayKey();
+}
+function markSettingsEditedToday(){try{localStorage.setItem("porquinho_lastsettingsedit",todayKey())}catch(e){}}
+function updateSettingsEditLabel(){
+ const el=document.getElementById("settingsEditLabel"),btn=document.getElementById("saveSettingsBtn");
+ if(!el||!btn)return;
+ if(canEditSettingsToday()){el.textContent="Você pode alterar seus dados 1 vez por dia.";btn.disabled=false}
+ else{el.textContent="Você já alterou seus dados hoje. Tente novamente amanhã.";btn.disabled=true}
+}
+function saveSettings(){
+ if(!canEditSettingsToday()){toast("Você já alterou seus dados hoje. Tente novamente amanhã.");return}
+ const s=Number(document.getElementById("salary").value),h=Number(document.getElementById("workHours").value),d=Number(document.getElementById("workDayHours").value);if(!(s>0&&h>0&&d>0)){toast("Informe valores válidos");return}state.salary=s;state.workHours=h;state.workDayHours=d;markSettingsEditedToday();persist();update();updateSettingsEditLabel();toast("Dados atualizados")}
 function toggleDark(){state.dark=!state.dark;persist();update()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="meu-tempo-vale-backup.json";a.click();URL.revokeObjectURL(a.href)}
-function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];persist();update();toast("Backup importado")}catch(e){showAlert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.expenses)||!Array.isArray(x.goals))throw 0;state=x;if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];if(!Array.isArray(state.payDates))state.payDates=[];persist();update();toast("Backup importado")}catch(e){showAlert("Arquivo de backup inválido.")}};r.readAsText(f);ev.target.value=""}
 async function clearData(){if(await showConfirm("Isso apagará gastos, metas e configurações. Continuar?")){localStorage.removeItem("mtv_state");state={salary:800,workHours:20,workDayHours:4,expenses:[],goals:[],dark:false};state.extraIncomes=[];persist();update();toast("Dados apagados")}}
 function openModal(id){document.getElementById(id).classList.add("open")}
 function closeModal(id){document.getElementById(id).classList.remove("open")}
@@ -295,6 +413,7 @@ function celebrateGoal(){
 }
 
 update();
+checkOnboarding();
 </script>
 </body>
 </html>
