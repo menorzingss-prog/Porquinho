@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#6d28d9">
 <title>Meu Tempo Vale</title>
+<!-- PWA: instalação e offline (iPhone e Android) -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meu Tempo Vale">
 <style>
 *{box-sizing:border-box} :root{--p:#6d28d9;--p2:#9333ea;--bg:#f5f3f8;--card:#fff;--text:#20182b;--muted:#766d82;--line:#e9e3ef;--danger:#dc2626;--good:#16a34a}
 body.dark{--bg:#15121a;--card:#211c28;--text:#f7f3fb;--muted:#aaa0b5;--line:#352e3d}
@@ -414,6 +421,52 @@ function celebrateGoal(){
 
 update();
 checkOnboarding();
+// ATALHO RÁPIDO: se o link for aberto com ?valor=50, já abre a tela de
+// adicionar gasto com esse valor preenchido, faltando só nome e categoria.
+// Ex.: index1.html?valor=50 (útil pra atalhos de automação Android/iOS)
+// Ou com ?extra=100 (e opcionalmente &desc=Transferência), abre a aba
+// Extras já com o valor (e descrição, se vier) preenchidos.
+let ultimoQuickAddProcessado="";
+function checkQuickAdd(){
+ try{
+  const search=window.location.search;
+  if(!search||search===ultimoQuickAddProcessado)return;
+  const params=new URLSearchParams(search);
+  let valor=params.get("valor");
+  if(valor)valor=valor.replace(/\./g,"").replace(",",".").replace(/[^0-9.]/g,"");
+  if(valor&&Number(valor)>0&&state.onboardingDone){
+   ultimoQuickAddProcessado=search;
+   setTimeout(()=>{
+    showScreen("home",document.querySelector('[data-screen=home]'));
+    openExpense();
+    document.getElementById("expenseAmount").value=Number(valor);
+    document.getElementById("expenseName").focus();
+   },0);
+   return;
+  }
+  let extra=params.get("extra");
+  if(extra)extra=extra.replace(/\./g,"").replace(",",".").replace(/[^0-9.]/g,"");
+  if(extra&&Number(extra)>0&&state.onboardingDone){
+   ultimoQuickAddProcessado=search;
+   const desc=params.get("desc")||"";
+   setTimeout(()=>{
+    showScreen("extras",document.querySelector('[data-screen=extras]'));
+    document.getElementById("extraAmount").value=Number(extra);
+    document.getElementById("extraDesc").value=desc;
+    document.getElementById("extraDesc").focus();
+   },0);
+  }
+ }catch(e){}
+}
+checkQuickAdd();
+window.addEventListener("pageshow",checkQuickAdd);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkQuickAdd()});
+// PWA: registra o service worker pra funcionar offline (essencial no iPhone)
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+ });
+}
 </script>
 </body>
 </html>
