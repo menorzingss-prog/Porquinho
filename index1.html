@@ -63,6 +63,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="grid">
 <div class="mini"><span class="label">Valor da hora</span><b id="hourValue"></b></div>
 <div class="mini"><span class="label">Tempo gasto <span class="info-icon" style="width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle" onclick="showSpentHoursInfo()">ⓘ</span></span><b id="spentTime"></b></div>
+<div class="mini"><span class="label">Gastos hoje</span><b id="daySpent"></b></div>
 <div class="mini"><span class="label">Gastos no mês</span><b id="monthSpent"></b></div>
 <div class="mini"><span class="label">Últimos 7 dias</span><b id="weekSpent"></b></div>
 </div></section>
@@ -213,11 +214,12 @@ function showHoursAlert(hours){showAlert(`⏱️ ${timeText(hours)} de trabalho`
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
 function totals(){
- const now=new Date(),month=now.getMonth(),year=now.getFullYear();
+ const now=new Date(),month=now.getMonth(),year=now.getFullYear(),day=now.getDate();
  const monthExpenses=state.expenses.filter(x=>{const d=new Date(x.date);return d.getMonth()===month&&d.getFullYear()===year});
  const monthSpent=monthExpenses.reduce((a,b)=>a+Number(b.amount),0);
  const weekSpent=state.expenses.filter(x=>(now-new Date(x.date))<=7*86400000).reduce((a,b)=>a+Number(b.amount),0);
- return {monthSpent,weekSpent}
+ const daySpent=state.expenses.filter(x=>{const d=new Date(x.date);return d.getDate()===day&&d.getMonth()===month&&d.getFullYear()===year}).reduce((a,b)=>a+Number(b.amount),0);
+ return {monthSpent,weekSpent,daySpent}
 }
 function update(){
  const t=totals(),hv=hourValue();
@@ -225,6 +227,7 @@ function update(){
  document.getElementById("hourValue").textContent=money(hv);
  document.getElementById("spentTime").textContent=dayTimeText(hv?t.monthSpent/hv:0);
  document.getElementById("monthSpent").textContent=money(t.monthSpent);
+ document.getElementById("daySpent").textContent=money(t.daySpent);
  document.getElementById("weekSpent").textContent=money(t.weekSpent);
  document.getElementById("salary").value=state.salary;
  document.getElementById("workHours").value=state.workHours;document.getElementById("workDayHours").value=state.workDayHours||4;
@@ -249,7 +252,7 @@ function renderReports(){
  const t=totals(),s={};state.expenses.forEach(x=>s[x.category]=(s[x.category]||0)+Number(x.amount));
  const max=Math.max(1,...Object.values(s));
  document.getElementById("categoryReport").innerHTML=Object.keys(s).length?Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join(""):`<div class="empty">Registre gastos para ver o relatório.</div>`;
- document.getElementById("reportSummary").innerHTML=`<p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${dayTimeText(hourValue()?t.monthSpent/hourValue():0)}</b> <span class="info-icon" onclick="showHoursAlert(${hourValue()?t.monthSpent/hourValue():0})">ⓘ</span></p>`
+ document.getElementById("reportSummary").innerHTML=`<p>Hoje: <b>${money(t.daySpent)}</b></p><p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${dayTimeText(hourValue()?t.monthSpent/hourValue():0)}</b> <span class="info-icon" onclick="showHoursAlert(${hourValue()?t.monthSpent/hourValue():0})">ⓘ</span></p>`
 }
 function renderGoals(){
  document.getElementById("goalList").innerHTML=state.goals.length?state.goals.map(g=>{const pct=Math.min(100,g.value?g.saved/g.value*100:0),remaining=Math.max(0,g.value-g.saved),hours=hourValue()?remaining/hourValue():0;return `<div class="goal"><div class="goalhead"><div>${g.image?`<img src="${g.image}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;margin-bottom:8px;display:block">`:""}<b>${esc(g.name)}</b><br><small>${money(g.saved)} de ${money(g.value)}</small></div><div class="goal-actions"><button class="actions" onclick="addSavedGoal(\'${g.id}\')">💰</button><button class="actions" onclick="deleteGoal(\'${g.id}\')">🗑️</button></div></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><small>${remaining<=0 ? '🏆 Meta concluída!' : `Faltam ${money(remaining)} • ${dayTimeText(hours)} de trabalho <span class="info-icon" style="width:18px;height:18px;font-size:11px" onclick="showHoursAlert(${hours})">ⓘ</span>`}</small></div>`}).join(""):`<div class="empty">🎯 Nenhuma meta criada.</div>`
