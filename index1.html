@@ -155,7 +155,7 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 <div class="toast" id="toast"></div>
 
 <script>
-function todayKey(){return new Date().toISOString().split("T")[0]}
+function todayKey(){return todayLocalStr()}
 function checkOnboarding(){
  if(!state.onboardingDone){showScreen("onboarding",null)}
 }
@@ -212,13 +212,22 @@ function dayTimeText(hours){
 }
 function showHoursAlert(hours){showAlert(`⏱️ ${timeText(hours)} de trabalho`)}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function todayLocalStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function toDateInputStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function parseLocalDate(str){
+ if(!str)return new Date(NaN);
+ const datePart=String(str).split("T")[0];
+ const p=datePart.split("-").map(Number);
+ if(p.length===3&&!p.some(isNaN))return new Date(p[0],p[1]-1,p[2]);
+ return new Date(str);
+}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
 function totals(){
  const now=new Date(),month=now.getMonth(),year=now.getFullYear(),day=now.getDate();
- const monthExpenses=state.expenses.filter(x=>{const d=new Date(x.date);return d.getMonth()===month&&d.getFullYear()===year});
+ const monthExpenses=state.expenses.filter(x=>{const d=parseLocalDate(x.date);return d.getMonth()===month&&d.getFullYear()===year});
  const monthSpent=monthExpenses.reduce((a,b)=>a+Number(b.amount),0);
- const weekSpent=state.expenses.filter(x=>(now-new Date(x.date))<=7*86400000).reduce((a,b)=>a+Number(b.amount),0);
- const daySpent=state.expenses.filter(x=>{const d=new Date(x.date);return d.getDate()===day&&d.getMonth()===month&&d.getFullYear()===year}).reduce((a,b)=>a+Number(b.amount),0);
+ const weekSpent=state.expenses.filter(x=>(now-parseLocalDate(x.date))<=7*86400000).reduce((a,b)=>a+Number(b.amount),0);
+ const daySpent=state.expenses.filter(x=>{const d=parseLocalDate(x.date);return d.getDate()===day&&d.getMonth()===month&&d.getFullYear()===year}).reduce((a,b)=>a+Number(b.amount),0);
  return {monthSpent,weekSpent,daySpent}
 }
 function update(){
@@ -236,7 +245,7 @@ function update(){
 }
 function expenseHTML(x){
  const c=cats[x.category]||cats.other,h=hourValue()?x.amount/hourValue():0;
- return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${new Date(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b><span class="muted">${dayTimeText(h)} <span class="info-icon" style="width:14px;height:14px;font-size:9px" onclick="showHoursAlert(${h})">ⓘ</span></span><div class="actions"><button onclick="editExpense('${x.id}')">✏️</button><button onclick="deleteExpense('${x.id}')">🗑️</button></div></div></div>`
+ return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${parseLocalDate(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b><span class="muted">${dayTimeText(h)} <span class="info-icon" style="width:14px;height:14px;font-size:9px" onclick="showHoursAlert(${h})">ⓘ</span></span><div class="actions"><button onclick="editExpense('${x.id}')">✏️</button><button onclick="deleteExpense('${x.id}')">🗑️</button></div></div></div>`
 }
 function renderRecent(){
  const arr=[...state.expenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
@@ -274,13 +283,13 @@ function showScreen(id,btn){
  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");
  document.getElementById("fab").style.display=(id==="home"||id==="expenses")?"block":"none";window.scrollTo({top:0,behavior:"smooth"})
 }
-function openExpense(){document.getElementById("expenseTitle").textContent="Adicionar gasto";document.getElementById("editId").value="";document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";document.getElementById("expenseDate").value=new Date().toISOString().split("T")[0];openModal("expenseModal")}
-function editExpense(id){const x=state.expenses.find(e=>String(e.id)===String(id));if(!x)return;document.getElementById("expenseTitle").textContent="Editar gasto";document.getElementById("editId").value=x.id;document.getElementById("expenseName").value=x.name;document.getElementById("expenseAmount").value=x.amount;document.getElementById("expenseCategory").value=x.category;document.getElementById("expenseDate").value=new Date(x.date).toISOString().split("T")[0];openModal("expenseModal")}
+function openExpense(){document.getElementById("expenseTitle").textContent="Adicionar gasto";document.getElementById("editId").value="";document.getElementById("expenseName").value="";document.getElementById("expenseAmount").value="";document.getElementById("expenseDate").value=todayLocalStr();openModal("expenseModal")}
+function editExpense(id){const x=state.expenses.find(e=>String(e.id)===String(id));if(!x)return;document.getElementById("expenseTitle").textContent="Editar gasto";document.getElementById("editId").value=x.id;document.getElementById("expenseName").value=x.name;document.getElementById("expenseAmount").value=x.amount;document.getElementById("expenseCategory").value=x.category;document.getElementById("expenseDate").value=toDateInputStr(parseLocalDate(x.date));openModal("expenseModal")}
 function saveExpense(){
  const id=document.getElementById("editId").value,name=document.getElementById("expenseName").value.trim(),amount=Number(document.getElementById("expenseAmount").value),category=document.getElementById("expenseCategory").value,date=document.getElementById("expenseDate").value;
  if(!name||!(amount>0)){toast("Preencha nome e valor");return}
- if(id){const x=state.expenses.find(e=>String(e.id)===String(id));Object.assign(x,{name,amount,category,date:new Date(date).toISOString()})}
- else state.expenses.push({id:String(Date.now()),name,amount,category,date:new Date(date || new Date().toISOString().split("T")[0]).toISOString()});
+ if(id){const x=state.expenses.find(e=>String(e.id)===String(id));Object.assign(x,{name,amount,category,date:date||todayLocalStr()})}
+ else state.expenses.push({id:String(Date.now()),name,amount,category,date:date||todayLocalStr()});
  persist();closeModal("expenseModal");update();toast("Gasto salvo")
 }
 async function deleteExpense(id){if(await showConfirm("Excluir este gasto?")){state.expenses=state.expenses.filter(x=>String(x.id)!==String(id));persist();update()}}
