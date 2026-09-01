@@ -92,7 +92,9 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 
 <section id="expenses" class="screen"><div class="sectionhead"><h2>Todos os gastos</h2><select id="filterCategory" style="width:auto" onchange="renderAll()"><option value="">Todas</option></select></div><div class="card" id="allList"></div></section>
 
-<section id="reports" class="screen"><div class="card"><h2>📊 Gastos por categoria</h2><div id="categoryReport"></div></div><div class="card"><h2>Resumo</h2><div id="reportSummary"></div></div></section>
+<section id="reports" class="screen"><div class="card"><h2>📊 Gastos por categoria</h2><div id="categoryReport"></div></div><div class="card"><h2>Resumo</h2><div id="reportSummary"></div></div>
+<div class="card"><h2>📅 Histórico mensal</h2><p class="muted">Veja o que foi gasto e recebido em meses anteriores.</p><select id="historyMonthSelect" onchange="renderMonthHistory()"></select><div id="monthHistoryDetail" style="margin-top:14px"></div></div>
+</section>
 
 <section id="goals" class="screen">
 <div class="card hero"><h2>🎯 Simule uma meta</h2><p class="muted">Descubra quantas horas de trabalho um objetivo representa.</p><button class="btn wide" onclick="openGoal()">Criar nova meta</button></div>
@@ -168,6 +170,12 @@ const cats={
 };
 let state=load();
 if(!Array.isArray(state.extraIncomes))state.extraIncomes=[];
+state.extraIncomes.forEach(x=>{
+ if(!x.date){
+  const ts=Number(x.id);
+  x.date=(ts&&!isNaN(ts))?toDateInputStr(new Date(ts)):todayLocalStr();
+ }
+});
 if(!Array.isArray(state.payDates))state.payDates=[];
 if(typeof state.onboardingDone!=="boolean"){
  state.onboardingDone=!!((state.expenses&&state.expenses.length)||(state.goals&&state.goals.length)||(state.salary&&state.salary!==800));
@@ -181,8 +189,16 @@ function load(){
 function persist(){localStorage.setItem("mtv_state",JSON.stringify(state))}
 function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
 function hourValue(){const monthlyHours=state.workHours*4.33;return monthlyHours>0?rendaTotal()/monthlyHours:0}
-function extraTotal(){return (state.extraIncomes||[]).reduce((a,b)=>a+Number(b.amount||0),0)}
-function rendaTotal(){return Number(state.salary||0)+extraTotal()}
+function extraTotal(month,year){
+ const now=new Date();
+ const m=month===undefined?now.getMonth():month,y=year===undefined?now.getFullYear():year;
+ return (state.extraIncomes||[]).filter(x=>{
+  const d=parseLocalDate(x.date||todayLocalStr());
+  return d.getMonth()===m&&d.getFullYear()===y;
+ }).reduce((a,b)=>a+Number(b.amount||0),0);
+}
+function extraTotalAllTime(){return (state.extraIncomes||[]).reduce((a,b)=>a+Number(b.amount||0),0)}
+function rendaTotal(month,year){return Number(state.salary||0)+extraTotal(month,year)}
 function payDatesTotal(){return (state.payDates||[]).reduce((a,b)=>a+Number(b.valor||0),0)}
 function recebidoAteHoje(){
  if(!state.payDates||!state.payDates.length)return Number(state.salary||0);
@@ -254,7 +270,7 @@ function renderRecent(){
 }
 function renderAll(){
  const f=document.getElementById("filterCategory").value;
- const arr=[...state.expenses].filter(x=>!f||x.category===f).sort((a,b)=>new Date(b.date)-new Date(a.date));
+ const arr=[...state.expenses].filter(x=>!f||x.category===f).sort((a,b)=>parseLocalDate(b.date)-parseLocalDate(a.date));
  document.getElementById("allList").innerHTML=arr.length?arr.map(expenseHTML).join(""):`<div class="empty">Nenhum gasto nesta categoria.</div>`
 }
 function renderReports(){
@@ -262,6 +278,37 @@ function renderReports(){
  const max=Math.max(1,...Object.values(s));
  document.getElementById("categoryReport").innerHTML=Object.keys(s).length?Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join(""):`<div class="empty">Registre gastos para ver o relatório.</div>`;
  document.getElementById("reportSummary").innerHTML=`<p>Hoje: <b>${money(t.daySpent)}</b></p><p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${dayTimeText(hourValue()?t.monthSpent/hourValue():0)}</b> <span class="info-icon" onclick="showHoursAlert(${hourValue()?t.monthSpent/hourValue():0})">ⓘ</span></p>`
+ populateHistoryMonths();
+}
+const NOMES_MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function populateHistoryMonths(){
+ const sel=document.getElementById("historyMonthSelect");
+ if(!sel)return;
+ const chaves=new Set();
+ const now=new Date();
+ chaves.add(`${now.getFullYear()}-${now.getMonth()}`);
+ (state.expenses||[]).forEach(x=>{const d=parseLocalDate(x.date);if(!isNaN(d))chaves.add(`${d.getFullYear()}-${d.getMonth()}`)});
+ (state.extraIncomes||[]).forEach(x=>{const d=parseLocalDate(x.date||todayLocalStr());if(!isNaN(d))chaves.add(`${d.getFullYear()}-${d.getMonth()}`)});
+ const lista=[...chaves].map(k=>{const [y,m]=k.split("-").map(Number);return {y,m}}).sort((a,b)=>(b.y-a.y)||(b.m-a.m));
+ const valorAtual=sel.value;
+ sel.innerHTML=lista.map(({y,m})=>`<option value="${y}-${m}">${NOMES_MESES[m]} de ${y}</option>`).join("");
+ if(valorAtual&&lista.some(({y,m})=>`${y}-${m}`===valorAtual))sel.value=valorAtual;
+ renderMonthHistory();
+}
+function renderMonthHistory(){
+ const sel=document.getElementById("historyMonthSelect");
+ if(!sel||!sel.value)return;
+ const [y,m]=sel.value.split("-").map(Number);
+ const gastosDoMes=(state.expenses||[]).filter(x=>{const d=parseLocalDate(x.date);return d.getFullYear()===y&&d.getMonth()===m}).sort((a,b)=>parseLocalDate(b.date)-parseLocalDate(a.date));
+ const extrasDoMes=(state.extraIncomes||[]).filter(x=>{const d=parseLocalDate(x.date||todayLocalStr());return d.getFullYear()===y&&d.getMonth()===m});
+ const totalGasto=gastosDoMes.reduce((a,b)=>a+Number(b.amount),0);
+ const totalExtra=extrasDoMes.reduce((a,b)=>a+Number(b.amount),0);
+ let html=`<div class="cathead"><span class="label">Total gasto</span><b>${money(totalGasto)}</b></div><div class="cathead" style="margin-top:6px"><span class="label">Total de ganhos extras</span><b style="color:var(--good)">${money(totalExtra)}</b></div>`;
+ html+=`<h2 style="margin:16px 0 8px;font-size:15px">Gastos do mês</h2>`;
+ html+=gastosDoMes.length?gastosDoMes.map(x=>{const c=cats[x.category]||cats.other;return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${parseLocalDate(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b></div></div>`}).join(""):`<div class="empty">Nenhum gasto nesse mês.</div>`;
+ html+=`<h2 style="margin:16px 0 8px;font-size:15px">Ganhos extras do mês</h2>`;
+ html+=extrasDoMes.length?extrasDoMes.map(x=>`<div class="expense"><div class="ico">💰</div><div class="grow"><b>${esc(x.desc)}</b><span class="muted">${parseLocalDate(x.date||todayLocalStr()).toLocaleDateString("pt-BR")}</span></div><div class="right"><b style="color:var(--good)">+${money(x.amount)}</b></div></div>`).join(""):`<div class="empty">Nenhum ganho extra nesse mês.</div>`;
+ document.getElementById("monthHistoryDetail").innerHTML=html;
 }
 function renderGoals(){
  document.getElementById("goalList").innerHTML=state.goals.length?state.goals.map(g=>{const pct=Math.min(100,g.value?g.saved/g.value*100:0),remaining=Math.max(0,g.value-g.saved),hours=hourValue()?remaining/hourValue():0;return `<div class="goal"><div class="goalhead"><div>${g.image?`<img src="${g.image}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;margin-bottom:8px;display:block">`:""}<b>${esc(g.name)}</b><br><small>${money(g.saved)} de ${money(g.value)}</small></div><div class="goal-actions"><button class="actions" onclick="addSavedGoal(\'${g.id}\')">💰</button><button class="actions" onclick="deleteGoal(\'${g.id}\')">🗑️</button></div></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><small>${remaining<=0 ? '🏆 Meta concluída!' : `Faltam ${money(remaining)} • ${dayTimeText(hours)} de trabalho <span class="info-icon" style="width:18px;height:18px;font-size:11px" onclick="showHoursAlert(${hours})">ⓘ</span>`}</small></div>`}).join(""):`<div class="empty">🎯 Nenhuma meta criada.</div>`
@@ -318,7 +365,7 @@ async function addSavedGoal(id){
 function addExtraIncome(){
  const desc=document.getElementById("extraDesc").value.trim(),amount=Number(document.getElementById("extraAmount").value);
  if(!desc||!(amount>0)){toast("Preencha a descrição e o valor");return}
- state.extraIncomes.push({id:String(Date.now()),desc,amount});
+ state.extraIncomes.push({id:String(Date.now()),desc,amount,date:todayLocalStr()});
  persist();
  document.getElementById("extraDesc").value="";
  document.getElementById("extraAmount").value="";
@@ -327,8 +374,12 @@ function addExtraIncome(){
 }
 async function deleteExtraIncome(id){if(await showConfirm("Excluir este ganho extra?")){state.extraIncomes=state.extraIncomes.filter(x=>String(x.id)!==String(id));persist();update()}}
 function renderExtras(){
- const arr=state.extraIncomes||[];
- document.getElementById("extraList").innerHTML=arr.length?arr.map(x=>`<div class="expense"><div class="ico">💰</div><div class="grow"><b>${esc(x.desc)}</b></div><div class="right"><b style="color:var(--good)">+${money(x.amount)}</b><div class="actions"><button onclick="deleteExtraIncome('${x.id}')">🗑️</button></div></div></div>`).join(""):`<div class="empty">Nenhum ganho extra cadastrado.</div>`;
+ const now=new Date();
+ const arr=(state.extraIncomes||[]).filter(x=>{
+  const d=parseLocalDate(x.date||todayLocalStr());
+  return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+ }).sort((a,b)=>parseLocalDate(b.date)-parseLocalDate(a.date));
+ document.getElementById("extraList").innerHTML=arr.length?arr.map(x=>`<div class="expense"><div class="ico">💰</div><div class="grow"><b>${esc(x.desc)}</b><span class="muted">${parseLocalDate(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b style="color:var(--good)">+${money(x.amount)}</b><div class="actions"><button onclick="deleteExtraIncome('${x.id}')">🗑️</button></div></div></div>`).join(""):`<div class="empty">Nenhum ganho extra registrado este mês.</div>`;
  document.getElementById("extraTotalValue").textContent=money(extraTotal());
  document.getElementById("rendaTotalValue").textContent=money(rendaTotal());
 }
