@@ -92,8 +92,10 @@ nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:5p
 
 <section id="expenses" class="screen"><div class="sectionhead"><h2>Todos os gastos</h2><select id="filterCategory" style="width:auto" onchange="renderAll()"><option value="">Todas</option></select></div><div class="card" id="allList"></div></section>
 
-<section id="reports" class="screen"><div class="card"><h2>📊 Gastos por categoria</h2><div id="categoryReport"></div></div><div class="card"><h2>Resumo</h2><div id="reportSummary"></div></div>
-<div class="card"><h2>📅 Histórico mensal</h2><p class="muted">Veja o que foi gasto e recebido em meses anteriores.</p><select id="historyMonthSelect" onchange="renderMonthHistory()"></select><div id="monthHistoryDetail" style="margin-top:14px"></div></div>
+<section id="reports" class="screen"><div class="card"><h2>Resumo</h2><div id="reportSummary"></div></div>
+<div class="card"><h2>📅 Histórico mensal</h2><p class="muted">Escolha um mês para ver os gastos por categoria e a lista completa.</p><select id="historyMonthSelect" onchange="renderMonthHistory()"></select>
+<h2 id="categoryReportTitle" style="margin:18px 0 8px;font-size:15px">📊 Gastos por categoria</h2><div id="categoryReport"></div>
+<div id="monthHistoryDetail" style="margin-top:14px"></div></div>
 </section>
 
 <section id="goals" class="screen">
@@ -274,9 +276,7 @@ function renderAll(){
  document.getElementById("allList").innerHTML=arr.length?arr.map(expenseHTML).join(""):`<div class="empty">Nenhum gasto nesta categoria.</div>`
 }
 function renderReports(){
- const t=totals(),s={};state.expenses.forEach(x=>s[x.category]=(s[x.category]||0)+Number(x.amount));
- const max=Math.max(1,...Object.values(s));
- document.getElementById("categoryReport").innerHTML=Object.keys(s).length?Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join(""):`<div class="empty">Registre gastos para ver o relatório.</div>`;
+ const t=totals();
  document.getElementById("reportSummary").innerHTML=`<p>Hoje: <b>${money(t.daySpent)}</b></p><p>Este mês: <b>${money(t.monthSpent)}</b></p><p>Últimos 7 dias: <b>${money(t.weekSpent)}</b></p><p>Tempo de trabalho consumido no mês: <b>${dayTimeText(hourValue()?t.monthSpent/hourValue():0)}</b> <span class="info-icon" onclick="showHoursAlert(${hourValue()?t.monthSpent/hourValue():0})">ⓘ</span></p>`
  populateHistoryMonths();
 }
@@ -303,6 +303,11 @@ function renderMonthHistory(){
  const extrasDoMes=(state.extraIncomes||[]).filter(x=>{const d=parseLocalDate(x.date||todayLocalStr());return d.getFullYear()===y&&d.getMonth()===m});
  const totalGasto=gastosDoMes.reduce((a,b)=>a+Number(b.amount),0);
  const totalExtra=extrasDoMes.reduce((a,b)=>a+Number(b.amount),0);
+ const catTitle=document.getElementById("categoryReportTitle");
+ if(catTitle)catTitle.textContent=`📊 Gastos por categoria — ${NOMES_MESES[m]} de ${y}`;
+ const catMap={};gastosDoMes.forEach(x=>catMap[x.category]=(catMap[x.category]||0)+Number(x.amount));
+ const maxCat=Math.max(1,...Object.values(catMap));
+ document.getElementById("categoryReport").innerHTML=Object.keys(catMap).length?Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="catline"><div class="cathead"><span>${(cats[k]||cats.other).icon} ${(cats[k]||cats.other).name}</span><b>${money(v)}</b></div><div class="bar"><div class="fill" style="width:${v/maxCat*100}%"></div></div></div>`).join(""):`<div class="empty">Nenhum gasto nesse mês.</div>`;
  let html=`<div class="cathead"><span class="label">Total gasto</span><b>${money(totalGasto)}</b></div><div class="cathead" style="margin-top:6px"><span class="label">Total de ganhos extras</span><b style="color:var(--good)">${money(totalExtra)}</b></div>`;
  html+=`<h2 style="margin:16px 0 8px;font-size:15px">Gastos do mês</h2>`;
  html+=gastosDoMes.length?gastosDoMes.map(x=>{const c=cats[x.category]||cats.other;return `<div class="expense"><div class="ico">${c.icon}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted">${c.name} • ${parseLocalDate(x.date).toLocaleDateString("pt-BR")}</span></div><div class="right"><b>-${money(x.amount)}</b></div></div>`}).join(""):`<div class="empty">Nenhum gasto nesse mês.</div>`;
